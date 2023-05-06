@@ -2,7 +2,7 @@
 name = "hatespeachrecognition"
 version = "0.1.0"
 description = ""
-authors = ["Andrii <andrii.sonsiadlo@gmail.com>"]
+authors = ["Andrii Sonsiadlo <andrii.sonsiadlo@gmail.com>, Krzysztof Ragan, Stanislav Kolakovski"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
