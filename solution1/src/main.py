@@ -70,7 +70,7 @@ def split_df(df, feat='clean_text', tar='label'):
     return x_train, x_test, y_train, y_test
 
 
-def balance_df(x_train, y_train):
+def balance_train(x_train, y_train):
     sm = SMOTE(random_state=42)
     X_res, y_res = sm.fit_resample(x_train, y_train)
     return X_res, y_res
@@ -234,9 +234,14 @@ def run():
                      embedding_dim=embed_dim,
                      max_len=max_len)
 
-    lstm.model.fit(np.array(Xtrain), np.array(Ytrain), batch_size=128, epochs=50)
+    x_train_smote, y_train_smote = balance_train(np.array(Xtrain), np.array(Ytrain))
 
-    model = lstm.model
+    print(np.array(Xtrain).shape)
+    print(np.array(Ytrain).shape)
+    print(f"x_smote shape: {x_train_smote.shape}")
+    print(f"y_smote shape: {y_train_smote.shape}")
+
+    lstm.model.fit(x_train_smote, y_train_smote, batch_size=128, epochs=50)
 
     # If X_test is provided we make predictions with the created model
 
@@ -294,7 +299,7 @@ def run_smote():
     x_train_b, x_test_b = bag_words(x_train, x_test)
 
     # generating synthetic data with smote
-    x_train_smote, y_train_smote = balance_df(x_train_b, y_train)
+    x_train_smote, y_train_smote = balance_train(x_train_b, y_train)
 
     print(x_train_smote.shape, y_train_smote.shape)
 
