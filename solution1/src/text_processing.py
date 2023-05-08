@@ -3,6 +3,7 @@ import re, string, unicodedata
 from nltk import TweetTokenizer
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 
 def remove_numbers(text):
@@ -22,7 +23,7 @@ def remove_punctuations(text):
 def remove_stopwords(text):
     stop_words = set(stopwords.words('english'))
     stop_words.add('rt')
-    stop_words.add('RT')
+    # stop_words.add('RT')
     imp_words = []
 
     # Storing the important words
@@ -68,14 +69,29 @@ def preprocess(text):
     text = re.sub("@[A-Za-z0-9_]+", "", text)
     text = re.sub("#[A-Za-z0-9_]+", "", text)
 
-    # remove 'rt'
-    text = re.sub("rt", "", text)
-
     text = remove_punctuations(text)
     text = remove_numbers(text)
     text = remove_extra_white_spaces(text)
     text = remove_stopwords(text)
+    text = text.strip()
     text = lemmetize(text)
+
     # text = remove_extra_white_spaces(text)
 
     return text
+
+
+class TextToTensor():
+
+    def __init__(self, tokenizer, max_len):
+        self.tokenizer = tokenizer
+        self.max_len = max_len
+
+    def string_to_tensor(self, string_list: list) -> list:
+        """
+        A method to convert a string list to a tensor for a deep learning model
+        """
+        string_list = self.tokenizer.texts_to_sequences(string_list)
+        string_list = pad_sequences(string_list, maxlen=self.max_len)
+
+        return string_list
