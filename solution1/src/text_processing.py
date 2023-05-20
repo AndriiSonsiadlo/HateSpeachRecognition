@@ -5,6 +5,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
+# TODO: slang word removal
 
 def remove_numbers(text):
     number_pattern = r'\d+'

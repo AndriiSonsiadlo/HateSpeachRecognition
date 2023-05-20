@@ -196,8 +196,9 @@ def run():
 
     df['clean_text'] = df['text'].apply(lambda text: preprocess(text))
 
-    # padding sequence -
-
+    sb.countplot(data=df, x="category")
+    plt.show()
+    print(df.head(3))
 
     x_train, x_test, y_train, y_test = split_df(df)
 
@@ -212,7 +213,7 @@ def run():
     Xtrain = x_train.tolist()
     Ytrain = y_train.tolist()
     Xtest = x_test.tolist()
-    Ytest = y_test.tolist()
+    Ytest = y_test
 
     tokenizer = Tokenizer()
     tokenizer.fit_on_texts(Xtrain)
@@ -236,22 +237,44 @@ def run():
 
     x_train_smote, y_train_smote = balance_train(np.array(Xtrain), np.array(Ytrain))
 
+    # few-shot learning
+    # under/over sampling, stratified sampling
+    # class-weights
+
     print(np.array(Xtrain).shape)
     print(np.array(Ytrain).shape)
     print(f"x_smote shape: {x_train_smote.shape}")
     print(f"y_smote shape: {y_train_smote.shape}")
 
-    lstm.model.fit(x_train_smote, y_train_smote, batch_size=128, epochs=50)
+    es = EarlyStopping(patience=3,
+                       monitor='accuracy',
+                       restore_best_weights=True)
+
+    lr = ReduceLROnPlateau(patience=2,
+                           monitor='loss',
+                           factor=0.5,
+                           verbose=0)
+
+    lstm.model.fit(x_train_smote, y_train_smote, batch_size=128, epochs=10,
+                   verbose=1,
+                   callbacks=[lr, es]
+                   )
+
+    # save model
+    model_name = "lstm.h5"
+    lstm.model.save(os.path.join(ROOT_DIR, 'solution1/models', model_name))
 
     # If X_test is provided we make predictions with the created model
 
     Xtest = t2t.string_to_tensor(Xtest)
-    yhat = [x[0] for x in lstm.model.predict(Xtest).tolist()]
 
-    acc = 0
-    # If true labels are provided we calculate the accuracy of the model
-    if len(Ytest) > 0:
-        acc = accuracy_score(Ytest, [1 if x > 0.5 else 0 for x in yhat])
+    preds = lstm.model.predict(np.array(Xtest))
+
+    preds = softmax_to_one_hot(preds)
+
+    print(f"preds shape {preds.shape}, test shape {Ytest.shape}")
+
+    acc = accuracy_score(Ytest, preds)
 
     print(f"acc= {round(acc, 2)}")
 
@@ -328,6 +351,12 @@ def run_oversample():
     # x_train_ros, y_train_ros = ROS.fit_resample(x_train_tf, y_train)
     # -----------------------------------------------------------------------
     pass
+
+
+
+def softmax_to_one_hot(softmax):
+    tensor = tf.one_hot(tf.argmax(softmax, axis=1), depth=3)
+    return tensor.numpy()
 
 
 if __name__ == '__main__':
