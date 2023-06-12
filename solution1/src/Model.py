@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, LSTM, Dense, Embedding, concatenate, Dropout, concatenate, SpatialDropout1D, Bidirectional, Sequential
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.layers import Input, LSTM, Dense, Embedding, concatenate, Dropout, concatenate, SpatialDropout1D, Bidirectional
 
 
 class LSTMmodel():
@@ -29,20 +29,20 @@ class LSTMmodel():
 
 class BiLSTM2():
     """
-    bi-directional lstm for hate-speech analysis
+    bidirectional lstm for hate-speech analysis
     """
     def __init__(self, embedding_matrix, embedding_dim, max_len):
         inp1 = Input(shape=(max_len,))
-        model = Sequential()
-        model.add(Embedding(embedding_matrix.shape[0], embedding_dim, weights=[embedding_matrix])(inp1))
-        model.add(SpatialDropout1D(0.3))
-        model.add(Bidirectional(LSTM(embedding_dim, dropout=0.3, recurrent_dropout=0.3)))
-        model.add(Dense(embedding_dim, activation='relu'))
-        model.add(Dropout(0.8))
-        model.add(Dense(embedding_dim, activation='relu'))
-        model.add(Dropout(0.8))
-        model.add(Dense(3, activation='softmax', name='classifier'))
-        model.compile(loss='sparse_categorical_crossentropy',
+        x = Embedding(embedding_matrix.shape[0], embedding_dim, weights=[embedding_matrix])(inp1)
+        x = SpatialDropout1D(0.3)(x)
+        x = Bidirectional(LSTM(embedding_dim, dropout=0.3, recurrent_dropout=0.3))(x)
+        x = Dense(embedding_dim, activation='relu')(x)
+        x = Dropout(0.8)(x)
+        x = Dense(embedding_dim, activation='relu')(x)
+        x = Dropout(0.8)(x)
+        x = Dense(3, activation='softmax', name='classifier')(x)
+        model = Model(inputs=inp1, outputs=x)
+        model.compile(loss='categorical_crossentropy',
                       optimizer='adam',
                       metrics=['accuracy'])
         self.model = model
@@ -54,12 +54,12 @@ class LSTM3():
     """
     def __init__(self, embedding_matrix, embedding_dim, max_len):
         inp1 = Input(shape=(max_len,))
-        model = Sequential()
-        model.add(Embedding(embedding_matrix.shape[0], embedding_dim, input_length=max_len)(inp1))
-        model.add(SpatialDropout1D(0.2))
-        model.add(LSTM(124, return_sequences=False))
-        model.add(Dropout(0.2))
-        model.add(Dense(3, activation='softmax', name='classifier'))
+        x = Embedding(embedding_matrix.shape[0], embedding_dim, input_length=max_len)(inp1)
+        x = SpatialDropout1D(0.2)(x)
+        x = LSTM(124, return_sequences=False)(x)
+        x = Dropout(0.2)(x)
+        x = Dense(3, activation='softmax', name='classifier')(x)
+        model = Model(inputs=inp1, outputs=x)
         model.compile(loss='categorical_crossentropy',
                       optimizer='adam',
                       metrics=['accuracy'])

@@ -3,7 +3,8 @@ import argparse
 
 import matplotlib.pyplot as plt
 
-from definitions import ROOT_DIR
+# from definitions import ROOT_DIR
+ROOT_DIR = '../../'
 from embeddings import *
 from text_processing import *
 from graphics import *
@@ -46,7 +47,7 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
 # other
 from gensim.models import Word2Vec
@@ -272,12 +273,11 @@ def plot_hist(history, category: str, filename=None):
     plt.title(f"Model {category.capitalize()}")
     plt.ylabel(category.capitalize())
     plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
 
     if filename is None:
         plt.show()
     else:
-        plt.savefig(filename)
+        plt.savefig(filename, bbox_inches='tight')
 
 
 def word2vec_embed_matrix(sentences, v_dim, mode="bow"):
@@ -313,7 +313,7 @@ def glove_embed_matrix(tokenizer, embed_dim=200):
     :param tokenizer:
     :return:
     """
-    embed_path = os.path.join(ROOT_DIR, EMBED_DIR, EMBED_FILE)
+    embed_path = r"C:\Users\Krzysztof\PycharmProjects\HateSpeachRecognition\embeds\glove.twitter.27B.200d.txt"# os.path.join(ROOT_DIR, EMBED_DIR, EMBED_FILE)
 
     # Creating the embedding matrix using stanford GloVe
     embedding = Embeddings(embed_path, embed_dim)
@@ -361,8 +361,7 @@ def save_results(lstm, xtest, ytest, history, save_file):
     models_dir = os.path.join(ROOT_DIR, "solution1", "models")
     lstm.model.save(os.path.join(models_dir, save_file))
 
-    # If X_test is provided we make predictions with the created model
-    preds = lstm.model.predict(np.array(xtest))
+    preds = lstm.model.predict(xtest)
 
     preds = softmax_to_one_hot(preds)
 
@@ -382,6 +381,7 @@ def save_results(lstm, xtest, ytest, history, save_file):
 
 def test_lstm1(xtrain, ytrain, xtest, ytest, embedding_matrix, embed_dim, max_len, num_epochs=100,
                save_file="bi_lstm1.h5"):
+
     lstm = LSTMmodel(embedding_matrix=embedding_matrix,
                      embedding_dim=embed_dim,
                      max_len=max_len)
@@ -396,31 +396,41 @@ def test_lstm1(xtrain, ytrain, xtest, ytest, embedding_matrix, embed_dim, max_le
                            verbose=0)
 
     print("fitting model...")
-    history = lstm.model.fit(xtrain, ytrain, validation_split=0.2, batch_size=128, epochs=num_epochs,
+    history = lstm.model.fit(xtrain, ytrain,
+                             validation_split=0.33,
+                             validation_data=(xtest, ytest),
+                             batch_size=128,
+                             epochs=num_epochs,
                              verbose=1,
                              callbacks=[lr, es]
                              )
+
+    print(f"max_len={max_len}")
+    print(f"embed_dim={embed_dim}")
+    print(f"embed_matrix shape0={embedding_matrix.shape[0]}")
 
     save_results(lstm, xtest, ytest, history=history, save_file=save_file)
 
 
 def test_lstm2(xtrain, ytrain, xtest, ytest, embedding_matrix, embed_dim, max_len, num_epochs=100,
                save_file="bi_lstm2.h5"):
+
     lstm = BiLSTM2(embedding_matrix=embedding_matrix, embedding_dim=embed_dim, max_len=max_len)
 
-    early_stop = EarlyStopping(monitor='val_loss', patience=2)
+    early_stop = EarlyStopping(monitor='val_loss', patience=5)
     history = lstm.model.fit(xtrain,
                              ytrain,
                              epochs=num_epochs,
                              validation_data=(xtest, ytest),
                              callbacks=[early_stop],
-                             verbose=2)
+                             verbose=1)
 
     save_results(lstm, xtest, ytest, history=history, save_file=save_file)
 
 
 def test_lstm3(xtrain, ytrain, xtest, ytest, embedding_matrix, embed_dim, max_len, num_epochs=100,
                save_file="lstm3.h5"):
+
     lstm = LSTM3(embedding_matrix=embedding_matrix, embedding_dim=embed_dim, max_len=max_len)
     early_stop = EarlyStopping(monitor='val_loss', patience=2)
     history = lstm.model.fit(xtrain,
@@ -428,7 +438,7 @@ def test_lstm3(xtrain, ytrain, xtest, ytest, embedding_matrix, embed_dim, max_le
                              epochs=num_epochs,
                              validation_data=(xtest, ytest),
                              callbacks=[early_stop],
-                             verbose=2)
+                             verbose=0)
 
     save_results(lstm, xtest, ytest, history=history, save_file=save_file)
 
@@ -454,7 +464,13 @@ def run():
     # df_pie(train_df)
     # show_count_plot("label", df)
 
+
     df['clean_text'] = df['text'].apply(lambda text: preprocess(text))
+
+    plot_bargraph_by_category(df)
+
+    print(df.shape[0])
+
 
     x_train, x_test, y_train, y_test = split_df(df)
 
@@ -496,6 +512,9 @@ def run():
     # tokenize
     Xtrain = t2t.string_to_tensor(Xtrain)
 
+    Xtest = t2t.string_to_tensor(Xtest)
+    Xtest = np.array(Xtest)
+
     print(np.array(Xtrain).shape)
     print(np.array(Ytrain).shape)
 
@@ -504,9 +523,12 @@ def run():
     print(f"x_balanced shape: {x_train_balanced.shape}")
     print(f"y_balanced shape: {y_train_balanced.shape}")
 
-    test_lstm1(x_train_balanced, y_train_balanced, Xtest, Ytest, embedding_matrix, embed_dim, max_len, num_epochs=100)
-    # test_lstm2(x_train_balanced, y_train_balanced, Xtest, Ytest, embedding_matrix, embed_dim, max_len, num_epochs=100)
-    # test_lstm3(x_train_balanced, y_train_balanced, Xtest, Ytest, embedding_matrix, embed_dim, max_len, num_epochs=100)
+    print(f"x_test shape: {np.array(Xtest).shape}")
+    print(f"y_test shape: {np.array(Ytest).shape}")
+
+    # test_lstm1(x_train_balanced, y_train_balanced, Xtest, Ytest, embedding_matrix=embedding_matrix, embed_dim=embed_dim, max_len=max_len, num_epochs=50)
+    # test_lstm2(x_train_balanced, y_train_balanced, Xtest, Ytest, embedding_matrix=embedding_matrix, embed_dim=embed_dim, max_len=max_len, num_epochs=50)
+    test_lstm3(x_train_balanced, y_train_balanced, Xtest, Ytest, embedding_matrix=embedding_matrix, embed_dim=embed_dim, max_len=max_len, num_epochs=100)
 
 
 if __name__ == '__main__':
