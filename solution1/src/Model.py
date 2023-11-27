@@ -1,4 +1,5 @@
 import tensorflow as tf
+from keras.layers import BatchNormalization
 from tensorflow import keras
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Input, LSTM, Dense, Embedding, concatenate, Dropout, concatenate, SpatialDropout1D, Bidirectional
@@ -13,9 +14,10 @@ class LSTMmodel():
         inp1 = Input(shape=(max_len,))
         x = Embedding(embedding_matrix.shape[0], embedding_dim, weights=[embedding_matrix])(inp1)
         x = Bidirectional(LSTM(256, return_sequences=True))(x)
+        x = BatchNormalization()(x)
         x = Bidirectional(LSTM(150))(x)
         x = Dense(128, activation="relu")(x)
-        x = Dropout(0.1)(x)
+        x = Dropout(0.4)(x)
         x = Dense(64, activation="relu")(x)
         x = Dense(3, activation='softmax', name='classifier')(x)
         model = Model(inputs=inp1, outputs=x)
@@ -32,13 +34,14 @@ class BiLSTM2():
     """
     def __init__(self, embedding_matrix, embedding_dim, max_len):
         inp1 = Input(shape=(max_len,))
-        x = Embedding(embedding_matrix.shape[0], embedding_dim, weights=[embedding_matrix])(inp1)
+        #
+        x = Embedding(embedding_matrix.shape[0], embedding_dim , weights=[embedding_matrix])(inp1)
         x = SpatialDropout1D(0.3)(x)
         x = Bidirectional(LSTM(embedding_dim, dropout=0.3, recurrent_dropout=0.3))(x)
         x = Dense(embedding_dim, activation='relu')(x)
-        x = Dropout(0.8)(x)
+        x = Dropout(0.4)(x)
         x = Dense(embedding_dim, activation='relu')(x)
-        x = Dropout(0.8)(x)
+        x = Dropout(0.4)(x)
         x = Dense(3, activation='softmax', name='classifier')(x)
         model = Model(inputs=inp1, outputs=x)
         model.compile(loss='categorical_crossentropy',

@@ -4,6 +4,7 @@ from nltk import TweetTokenizer
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+from nltk.probability import FreqDist
 
 # TODO: slang word removal
 
@@ -92,7 +93,25 @@ class TextToTensor():
         """
         A method to convert a string list to a tensor for a deep learning model
         """
-        string_list = self.tokenizer.texts_to_sequences(string_list)
-        string_list = pad_sequences(string_list, maxlen=self.max_len)
+        string_seq = self.tokenizer.texts_to_sequences(string_list)
+        padded_seq = pad_sequences(string_seq, maxlen=self.max_len)
 
-        return string_list
+        return padded_seq
+
+    def tweets_to_tensor(self, tweet_list: list) -> list:
+
+        if self.tokenizer.isInstance(TweetTokenizer):
+            tokenized = TweetTokenizer(self.tokenizer).tokenize_sents(tweet_list)
+            # Flatten the tokenized_tweets list
+            flat_tokens = [token for sublist in tokenized for token in sublist]
+
+            # Build vocabulary and assign indices
+            fdist = FreqDist(flat_tokens)
+            vocabulary = {word: index + 1 for index, (word, _) in enumerate(fdist.most_common())}
+
+            # Encode the sequences
+            encoded_sequences = [[vocabulary[token] for token in tokens] for tokens in tokenized]
+
+            print(encoded_sequences[:3])
+
+
