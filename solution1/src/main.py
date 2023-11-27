@@ -24,10 +24,10 @@ from nltk.stem import LancasterStemmer
 from nltk.tokenize import TweetTokenizer
 
 # TODO: uncomment on first run
-# nltk.download('stopwords')
-# nltk.download('omw-1.4')
-# nltk.download('wordnet')
-# nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('omw-1.4')
+nltk.download('wordnet')
+nltk.download('punkt')
 warnings.filterwarnings('ignore')
 
 from imblearn.over_sampling import RandomOverSampler, SMOTE
@@ -313,7 +313,7 @@ def glove_embed_matrix(tokenizer, embed_dim=200):
     :param tokenizer:
     :return:
     """
-    embed_path = r"C:\Users\Krzysztof\PycharmProjects\HateSpeachRecognition\embeds\glove.twitter.27B.200d.txt"# os.path.join(ROOT_DIR, EMBED_DIR, EMBED_FILE)
+    embed_path = r"..\..\embeds\glove.twitter.27B.200d.txt"# os.path.join(ROOT_DIR, EMBED_DIR, EMBED_FILE)
 
     # Creating the embedding matrix using stanford GloVe
     embedding = Embeddings(embed_path, embed_dim)

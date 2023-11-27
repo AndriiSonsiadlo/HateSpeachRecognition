@@ -7,7 +7,6 @@ from tensorflow.keras.layers import Input, LSTM, Dense, Embedding, concatenate, 
 class LSTMmodel():
     """
     A bi-drectional LSTM for hate-speech analysis
-
     """
 
     def __init__(self, embedding_matrix, embedding_dim, max_len, X_additional=None):
